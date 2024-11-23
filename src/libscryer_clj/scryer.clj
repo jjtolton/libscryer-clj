@@ -1,12 +1,14 @@
- (ns libscryer-clj.scryer
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [clojure.edn :as edn])
-  (:import (com.sun.jna Pointer)
-           ScryerJNABindings
-           ScryerJNABindings$ScryerMachine
-           ScryerJNABindings$ScryerMachine$ScryerPrologQueryIter
-           ScryerJNABindings$AutoFreeCString))
+(ns libscryer-clj.scryer
+  (:require
+   [clojure.data.json :as json]
+   [clojure.edn :as edn]
+   [clojure.string :as str]
+[clojure.walk :as walk])
+  (:import
+   ScryerJNABindings
+   ScryerJNABindings$AutoFreeCString
+   ScryerJNABindings$ScryerMachine
+   ScryerJNABindings$ScryerMachine$ScryerPrologQueryIter))
 
 (set! *warn-on-reflection* true)
 
@@ -42,7 +44,7 @@
           :or         {make-the-wam?   true
                        reload-the-wam? false}} (merge (load-scryer-edn!) opts)
          scryer                                ^ScryerJNABindings (ScryerJNABindings. scryer-path)]
-     (when-not scryer-bindings
+     (when-not @scryer-bindings
        (reset! scryer-bindings scryer))
      (when (or (and reload-the-wam? @the-wam)
                (and make-the-wam? (not @the-wam)))
@@ -84,9 +86,24 @@
           (let [result (:result res)]
             (if (boolean? result)
               (list result)
-              (map (fn [bindings]
-                     (update-keys bindings prolog-logic-var->lisp-logic-var))
-                   result)))
+              (letfn [(fix-binding-value [m k v]
+                        (assoc m k (fix-functor (fix-vars v))))
+                      (fix-bindings [node]
+                        (as-> (update-keys (:bindings node) prolog-logic-var->lisp-logic-var) node
+                          (reduce-kv fix-binding-value node node)))
+                      (fix-vars [node]
+                        (if (and (map? node)
+                                 (:bindings node))
+                          {:bindings (fix-bindings node)}
+                          node))
+                      (fix-functor [node]
+                        (cond
+                          (:functor node)  (list* (symbol (:functor node)) (map fix-functor (:args node)) )
+                          (:atom node)     [(:atom node)]
+                          (vector? node)   (map fix-functor node)
+                          (:variable node) (symbol (:variable node))
+                          :else           node))]
+                (fix-functor (fix-vars result)))))
           :ok)
         (throw (ex-info (:error res) res))))))
 
@@ -115,31 +132,37 @@
   ([^String module-name ^String prolog]
    (.. ^ScryerJNABindings$ScryerMachine (get-the-wam!) (consultModuleString module-name prolog))))
 
+(defn terminated-query [q]
+  (let [q (str/trim q)]
+    (if (not (str/ends-with? q "."))
+      (str q ".")
+      q)))
+
 (defn ^String wam-query! [^ScryerJNABindings$ScryerMachine wam ^String query]
-  (with-open [ptr ^ScryerJNABindings$AutoFreeCString (.. wam (runQuery query))]
+  (with-open [ptr ^ScryerJNABindings$AutoFreeCString (.. wam (runQuery (terminated-query query)))]
     (process-prolog-result ptr)))
 
 (defn ^String query! [^String query]
-  (wam-query! ^ScryerJNABindings$ScryerMachine (get-the-wam!) query))
+  (wam-query! ^ScryerJNABindings$ScryerMachine (get-the-wam!) (terminated-query query)))
 
 (defn ^ScryerJNABindings$ScryerMachine$ScryerPrologQueryIter wam-get-lazy-query-iterator!
   [^ScryerJNABindings$ScryerMachine wam ^String query]
-  (.. wam (generativeQuery query)))
-
-
+  (.. wam (generativeQuery (terminated-query query))))
 
 (defn ^ScryerJNABindings$ScryerMachine$ScryerPrologQueryIter get-lazy-query-iterator!
   [^String query]
-  (wam-get-lazy-query-iterator! (get-the-wam!) query))
+  (wam-get-lazy-query-iterator! (get-the-wam!) (terminated-query query)))
 
 (defn lazy-query-from-iterator!
   ([^ScryerJNABindings$ScryerMachine$ScryerPrologQueryIter query-iterator]
-   (eduction (take-while some?) cat (repeatedly (fn [] (process-prolog-result (.next query-iterator))))))
+   (eduction (take-while some?)  (repeatedly (fn [] (process-prolog-result (.next query-iterator))))))
   ([^ScryerJNABindings$ScryerMachine$ScryerPrologQueryIter query-iterator n]
-   (eduction (take-while some?) cat (repeatedly n (fn [] (process-prolog-result (.next query-iterator)))))))
+   (into [] 
+         (take-while some?)
+         (repeatedly n (fn [] (process-prolog-result (.next query-iterator)))))))
 
 (defn wam-transduce-query! [^ScryerJNABindings$ScryerMachine wam xform f coll ^String query]
-  (with-open [lazy ^ScryerJNABindings$ScryerMachine$ScryerPrologQueryIter (wam-get-lazy-query-iterator! wam query)]
+  (with-open [lazy ^ScryerJNABindings$ScryerMachine$ScryerPrologQueryIter (wam-get-lazy-query-iterator! wam (terminated-query query))]
     (transduce
      xform
      f
@@ -147,7 +170,7 @@
      (lazy-query-from-iterator! lazy))))
 
 (defn transduce-query! [xform f coll ^String query]
-  (wam-transduce-query! ^ScryerJNABindings$ScryerMachine (get-the-wam!) xform f coll query))
+  (wam-transduce-query! ^ScryerJNABindings$ScryerMachine (get-the-wam!) xform f coll (terminated-query query)))
 
 
 (comment
@@ -171,7 +194,7 @@
 
   (transduce-query!
    (comp
-    (map identity))
+    (map :bindings))
    (completing conj)
    []
    "X in 1..10, indomain(X).")
@@ -217,27 +240,71 @@
   (next query*)
   )
 
-(when-let [scryer-config (not-empty (load-scryer-edn!))]
-  (when (true? (:auto-intialize scryer-config))
-    (initialize! scryer-config)))
+
+(defn initialize-global-wam! []
+  (when-let [scryer-config (not-empty (load-scryer-edn!))]
+    (when (true? (:auto-intialize scryer-config))
+      (initialize! scryer-config))))
 
 
+(comment
+  (initialize!)
+  (initialize-global-wam!)
+
+  (def source (slurp "docs/examples/jugpour.pl"))
+  (consult! source)
+  
+  (with-open [lazy-query-iterator (get-lazy-query-iterator! "solve(N, Moves)")]
+    (into [] (take 3) (lazy-query-from-iterator! lazy-query-iterator)))
+
+  (query! "member(X, [1, 2, 3])")
+
+  (with-open [lazy-query-iterator (get-lazy-query-iterator! "solve(N, Moves)")]
+    (println (time (take 3 (lazy-query-from-iterator! lazy-query-iterator)))))
+  
+
+  (with-open [query (get-lazy-query-iterator! "solve(N, Moves)")]
+    (time (first (lazy-query-from-iterator! query))))
+
+  
+  ;; =>{:bindings {?moves ((fill ["a"]) (from_to ["a"] ["b"]) (from_to ["a"] ["c"])), ?n 3}}
+  
+
+  
+
+  (with-open [query (get-lazy-query-iterator! "X=f(a(b(1)), a(b(2)))")]
+    (into [] (take 1 (lazy-query-from-iterator! query))))
+
+  (let [wam (get-wam!)]
+    (wam-consult! wam (slurp "docs/examples/jugpour.pl"))
+    (with-open [query (wam-get-lazy-query-iterator! wam "solve(N, Moves)")]
+      (lazy-query-from-iterator! query 1)))
+
+  (time 
+   (with-open [query (wam-get-lazy-query-iterator! (get-wam!) "X=f(a(b(1)), a(b(2)))")]
+     (time (first (lazy-query-from-iterator! query 1)))))
+
+  ;; => [{:bindings {?x (f (a (b 1)) (a (b 2)))}}]
+
+  (with-open [query (wam-get-lazy-query-iterator! (get-wam!) "X=1, Y=X")]
+    (first (lazy-query-from-iterator! query)))
+
+  (with-open [query (wam-get-lazy-query-iterator! (get-wam!) "X=[1,2,3]")]
+    (first (lazy-query-from-iterator! query)))
 
 
+  (transduce-query!
+   (map :bindings)
+   (completing conj)
+   []
+   "X in 1..10, indomain(X).")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  (transduce-query! (map :bindings)
+                    (fn ([res] (persistent! res))
+                      ([res next] 
+                       (conj! res next)))
+                    (transient [])
+                    (str/join "," ["3 #= A+B"
+                                   "[A,B] ins -10..10"
+                                   "label([A,B])"]))
+  )

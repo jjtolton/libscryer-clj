@@ -1,4 +1,5 @@
 import com.sun.jna.Library;
+import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import java.lang.ref.Cleaner;
@@ -13,15 +14,15 @@ public class ScryerJNABindings {
 
         void scryer_machine_free(Pointer ptr);
 
-        Pointer scryer_run_query_iter(Pointer machine, String input);
+        Pointer scryer_run_query_iter(Pointer machine, Pointer input);
 
         void scryer_query_state_free(Pointer query_state);
 
         Pointer scryer_run_query_next(Pointer query_state);
 
-        void scryer_consult_module_string(Pointer machine, String module_name, String input);
+        void scryer_consult_module_string(Pointer machine, Pointer module_name, Pointer input);
 
-        Pointer scryer_run_query(Pointer machine, String input);
+        Pointer scryer_run_query(Pointer machine, Pointer input);
 
         void scryer_free_c_string(Pointer ptr);
     }
@@ -97,7 +98,9 @@ public class ScryerJNABindings {
             if (query_state != null) {
                 throw new IllegalStateException("Query generator already running, ");
             }
-            this.query_state = binding.scryer_run_query_iter(machine, input);
+            Pointer input1 = new Memory(Native.toByteArray(input, "UTF-8").length + 1);
+            input1.setString(0, input, "UTF-8");
+            this.query_state = binding.scryer_run_query_iter(machine, input1);
             return this.query_state;
         }
 
@@ -128,19 +131,39 @@ public class ScryerJNABindings {
             return new ScryerPrologQueryIter(this);
         }
 
+
         public void consultModuleString(String module_name, String input) {
             if (query_state != null) {
                 throw new IllegalStateException("Query generator already running");
             }
-            binding.scryer_consult_module_string(machine, module_name, input);
+
+            // Encode module_name to UTF-8 and allocate memory for it
+            Memory module_name_memory = new Memory(Native.toByteArray(module_name, "UTF-8").length + 1);
+            module_name_memory.setString(0, module_name, "UTF-8");
+
+            // Encode input to UTF-8 and allocate memory for it
+            Memory input_memory = new Memory(Native.toByteArray(input, "UTF-8").length + 1);
+            input_memory.setString(0, input, "UTF-8");
+
+            // Call the native method with encoded strings
+            binding.scryer_consult_module_string(machine, module_name_memory, input_memory);
         }
+
 
         public AutoFreeCString runQuery(String input) {
             if (query_state != null) {
                 throw new IllegalStateException("Query generator already running");
             }
-            Pointer ptr = binding.scryer_run_query(machine, input);
-            return new AutoFreeCString(binding, ptr);
+
+            // Encode the input string to UTF-8 and allocate memory for it
+            Memory input_memory = new Memory(Native.toByteArray(input, "UTF-8").length + 1);
+            input_memory.setString(0, input, "UTF-8");
+
+            // Call the native function with the encoded string
+            Pointer result_ptr = binding.scryer_run_query(machine, input_memory);
+
+            // Return the result wrapped in AutoFreeCString for automatic memory management
+            return new AutoFreeCString(binding, result_ptr);
         }
 
         public void freeCString(Pointer ptr) {
@@ -199,7 +222,7 @@ public class ScryerJNABindings {
 
         try (ScryerMachine machine = scryer.getScryerMachine()) {
             machine.consultModuleString("facts", ":- use_module(library(clpz)).");
-            machine.consultModuleString("blerps", "");
+//            machine.consultModuleString("blerps", "");
             String query = "3 #= 1+2.";
             try (AutoFreeCString result = machine.runQuery(query);) {
                 System.out.println(result.getValue());

@@ -2,6 +2,9 @@
 
 Because a modern lisp deserves a modern prolog.
 
+### Working Commits
+Known to work with Scryer Prolog `jjtolton` fork [8b307a1c515b9f3489e9a581aff8fb77e8f63e76](https://github.com/jjtolton/scryer-prolog/commit/8b307a1c515b9f3489e9a581aff8fb77e8f63e76).
+
 # Libscryer-clj
 
 [Scryer Prolog](https://www.scryer.pl/) is an [ISO/IEC 13211-1](https://www.iso.org/standard/21413.html) compliant modern prolog system written in rust.
