@@ -30,6 +30,7 @@ Pre-alpha, hackers only.  Clojure and Scryer are both individually solid and mat
 <summary>
 This guide assumes you already have Clojure setup for you machine.
 </summary>
+
 First, until https://github.com/mthom/scryer-prolog/pull/2465 is merged into the upstream branch, you need to clone [my fork](https://github.com/jjtolton/scryer-prolog/tree/ISSUE-2464/scryer-prolog-shared-lib-eval-code-c) of Scryer Prolog, which has the required shared library bindings. 
 
 Then you need to follow the very simple build instructions for [native compilation](https://github.com/mthom/scryer-prolog/pull/2465).
