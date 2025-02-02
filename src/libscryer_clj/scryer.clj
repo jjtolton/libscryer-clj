@@ -88,7 +88,11 @@
               (letfn [(fix-binding-value [m k v]
                         (assoc m k (fix-functor (fix-vars v))))
                       (fix-bindings [node]
-                        (as-> (update-keys (:bindings node) prolog-logic-var->lisp-logic-var) node
+                        (as-> (reduce-kv (fn [m k v]
+                                           (assoc m (prolog-logic-var->lisp-logic-var k) v))
+                                         (empty (:bindings node))
+                                         (:bindings node))
+                              node
                           (reduce-kv fix-binding-value node node)))
                       (fix-vars [node]
                         (if (and (map? node)
@@ -97,7 +101,7 @@
                           node))
                       (fix-functor [node]
                         (cond
-                          (:functor node)  (list* (symbol (:functor node)) (map fix-functor (:args node)) )
+                          (:functor node)  (list* (symbol (:functor node)) (map fix-functor (:args node)))
                           (:atom node)     [(:atom node)]
                           (vector? node)   (map fix-functor node)
                           (:variable node) (symbol (:variable node))
@@ -252,7 +256,7 @@
   (initialize!)
   (initialize-global-wam!)
 
-  (def source (slurp "docs/examples/jugpour.pl"))
+  (def source (slurp "resources/docs/examples/jugpour.pl"))
   (consult! source)
 
   (with-open [lazy-query-iterator (get-lazy-query-iterator! "solve(N, Moves)")]

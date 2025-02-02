@@ -1,7 +1,8 @@
 {:paths   ["src" "resources" "target/classes"
            "src/main/java"]
  :deps    {net.java.dev.jna/jna  {:mvn/version "5.13.0"}
-           org.clojure/data.json {:mvn/version "2.5.0"}}
+           org.clojure/data.json {:mvn/version "2.5.0"}
+           org.clojure/clojure {:mvn/version "1.12.0"}}
  :aliases {:test   {:extra-paths ["test"]}
            :runner {:main-opts  ["-m" "cognitect.test-runner"]
                     :extra-deps {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
@@ -12,4 +13,18 @@
                     :exec-fn    deps-deploy.deps-deploy/deploy
                     :exec-args  {:installer      :remote
                                  :sign-releases? true
-                                 :artifact       "deps-deploy.jar"}}}}
+                                 :artifact       "target/libscryer-clj.jar"}}
+           :install {:extra-deps {slipset/deps-deploy {:mvn/version "RELEASE"}}
+                     :exec-fn    deps-deploy.deps-deploy/deploy
+                     :exec-args  {:installer :local
+                                  :artifact   "target/libscryer-clj.jar"}}
+           :depstar {:replace-deps {com.github.seancorfield/depstar {:mvn/version "2.0.193"}}
+                     :ns-default   hf.depstar
+                     :exec-fn      hf.depstar/jar
+                     :exec-args    {:group-id    "jjtolton"
+                                    :artifact-id "libscryer-clj"
+                                    :version     "0.1.0-ALPHA-SNAPSHOT"
+                                    :sync-pom    true
+                                    :aot         true
+                                    :compile-ns  [libscryer-clj.scryer]
+                                    :jar         "target/libscryer-clj.jar"}}}}

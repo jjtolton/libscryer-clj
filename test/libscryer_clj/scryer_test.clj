@@ -16,7 +16,7 @@
 (t/deftest handle-jug-pour
   (t/testing "Can handle jug pour problem"
     (scryer/initialize-global-wam!)
-    (scryer/consult! (slurp "docs/examples/jugpour.pl"))
+    (scryer/consult! (slurp "resources/docs/examples/jugpour.pl"))
     (with-open [query (scryer/get-lazy-query-iterator! "solve(N, Moves)")]
       (t/is (=  (first (scryer/lazy-query-from-iterator! query))
                 '{?moves ((fill ["a"])
