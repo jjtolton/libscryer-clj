@@ -218,11 +218,10 @@ public class ScryerJNABindings {
 
     public static void main(String[] args) {
 
-        ScryerJNABindings scryer = new ScryerJNABindings("/home/jay/programs/scryer-prolog/target/debug/libscryer_prolog.so");
+        ScryerJNABindings scryer = new ScryerJNABindings("/home/jay/programs/scryer-prolog/target/release/libscryer_prolog.so");
 
         try (ScryerMachine machine = scryer.getScryerMachine()) {
             machine.consultModuleString("facts", ":- use_module(library(clpz)).");
-//            machine.consultModuleString("blerps", "");
             String query = "3 #= 1+2.";
             try (AutoFreeCString result = machine.runQuery(query);) {
                 System.out.println(result.getValue());
