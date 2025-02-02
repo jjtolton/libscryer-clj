@@ -47,8 +47,8 @@ Setup:
 </summary>
 
 ```clojure
-ai.toltontechnology/libscryer-clj {:git/url "https://github.com/user/my-library" 
-                                   :git/sha "insert-sha-here"}
+jjtolton/libscryer-clj  {:git/url "https://github.com/user/my-library" 
+                         :git/sha "insert-sha-here"}
 ```
 
 It's easiest if you place a `scryer.edn` in the same directory as your `deps.edn`. 
