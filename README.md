@@ -2,8 +2,12 @@
 
 Because a modern lisp deserves a modern prolog.
 
+<hr>
+
 ### Working Commits
 Known to work with Scryer Prolog `jjtolton` fork [8b307a1c515b9f3489e9a581aff8fb77e8f63e76](https://github.com/jjtolton/scryer-prolog/commit/8b307a1c515b9f3489e9a581aff8fb77e8f63e76).
+
+<hr>
 
 # Libscryer-clj
 
@@ -182,3 +186,17 @@ Please check the section in the [documentation](https://github.com/jjtolton/scry
 ## TODO:
 
 - [ ] Clojure/Prolog isomorphic API/macros (TBD)
+
+<hr>
+
+## Acknowledgements
+
+Technique for embedding shared libraries in Clojure developed by the astonishing [Chris Neurnberger](https://github.com/cnuernber). 
+
+Huge thanks to the [Scryer Prolog community](https://github.com/mthom/scryer-prolog) for encouragement, knowledge, and help developing the rust Scryer bindings.
+
+Special thanks to [Markus Triska](https://www.metalevel.at/) for making the mysteries of Prolog fun, understandable, and meaningful!
+
+
+
+
