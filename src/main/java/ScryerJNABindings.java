@@ -202,7 +202,6 @@ public class ScryerJNABindings {
             return ptr;
         }
 
-        // Implement the AutoCloseable interface
         @Override
         public void close() {
             binding.scryer_free_c_string(ptr);
@@ -213,26 +212,4 @@ public class ScryerJNABindings {
         return new ScryerMachine(binding);
     }
 
-    // idiomatic wrapper methods
-
-
-    public static void main(String[] args) {
-
-        ScryerJNABindings scryer = new ScryerJNABindings("/home/jay/programs/scryer-prolog/target/release/libscryer_prolog.so");
-
-        try (ScryerMachine machine = scryer.getScryerMachine()) {
-            machine.consultModuleString("facts", ":- use_module(library(clpz)).");
-            String query = "3 #= 1+2.";
-            try (AutoFreeCString result = machine.runQuery(query);) {
-                System.out.println(result.getValue());
-            }
-            machine.consultModuleString("facts", "fact(1). fact(2). fact(3). fact(4). fact(5).");
-            try (ScryerMachine.ScryerPrologQueryIter iter = machine.generativeQuery("fact(X).")) {
-                AutoFreeCString result;
-                while ((result = iter.next()) != null) {
-                    System.out.println(result.getValue());
-                }
-            }
-        }
-    }
 }
