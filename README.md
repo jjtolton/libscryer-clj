@@ -149,7 +149,7 @@ as --> [a], as.
 (.close query-iter) ;;=> IllegalStateException
 ```
 
-Alternatively, to use a more ideomatic/transducible pipeline, you can use `scryer/lazy-query!`:
+Alternatively, to use a more idiomatic/transducible pipeline, you can use `scryer/lazy-query!`:
 
 ```clojure
 (with-open [query-iter (get-lazy-query-iterator! "phrase(as, As).")]
