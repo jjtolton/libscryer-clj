@@ -179,5 +179,6 @@ The bindings are still [under development](https://github.com/mthom/scryer-prolo
 
 Please check the section in the [documentation](https://github.com/jjtolton/scryer-prolog/tree/ISSUE-2464/scryer-prolog-shared-lib-eval-code-c/docs/shared_library) about Important Caveats and Known Limitations.
 
-    
-    
+## TODO:
+
+- [ ] Clojure/Prolog isomorphic API/macros (TBD)
