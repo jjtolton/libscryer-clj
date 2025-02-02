@@ -1,4 +1,4 @@
-![epic handshake meme of muscular lisp arm and muscular prolog arm clasping hands](/home/jay/_project/libscryer-clj/img/handshake.jpg)
+![epic handshake meme of muscular lisp arm and muscular prolog arm clasping hands](img/handshake.jpg)
 
 Because a modern lisp deserves a modern prolog.
 
