@@ -22,11 +22,6 @@
            (catch java.io.FileNotFoundException _ "{}"))
       edn/read-string))
 
-(defn create-wam! []
-  (when-not ^ScryerJNABindings @scryer-bindings
-    (throw (Error. "Scryer bindings not loaded. Did you call initialize?")))
-  (.. ^ScryerJNABindings @scryer-bindings getScryerMachine))
-
 (defn load-the-wam! [prelude prelude-path ^ScryerJNABindings scryer]
   (let [wam ^ScryerJNABindings$ScryerMachine (.. scryer getScryerMachine)]
     (reset! the-wam wam)
@@ -263,9 +258,9 @@
   (with-open [lazy-query-iterator (get-lazy-query-iterator! "solve(N, Moves)")]
     (into [] (take 3) (lazy-query-from-iterator! lazy-query-iterator)))
 
-  (wam-query! (create-wam!) "member(X, [1, 2, 3])")
+  (wam-query! (get-wam!) "member(X, [1, 2, 3])")
 
-  (let [wam (create-wam!)]
+  (let [wam (get-wam!)]
     (wam-consult! wam ":- use_module(library(lists)).")
     (wam-query! wam "member(X, [1, 2, 3])"))
 
@@ -284,11 +279,8 @@
     (with-open [query (wam-get-lazy-query-iterator! wam "solve(N, Moves)")]
       (into [] (lazy-query-from-iterator! query 1))))
 
-  (time
-   (with-open [query (wam-get-lazy-query-iterator! (get-wam!) "X=f(a(b(1)), a(b(2)))")]
-     (time (first (lazy-query-from-iterator! query 1)))))
-
-  ;; => [{:bindings {?x (f (a (b 1)) (a (b 2)))}}]
+  (with-open [query (wam-get-lazy-query-iterator! (get-wam!) "X=f(a(b(1)), a(b(2)))")]
+    (time (first (lazy-query-from-iterator! query 1))))
 
   (with-open [query (wam-get-lazy-query-iterator! (get-wam!) "X=1, Y=X")]
     (first (lazy-query-from-iterator! query)))
@@ -297,12 +289,12 @@
     (first (lazy-query-from-iterator! query)))
 
   (transduce-query!
-   (map :bindings)
+   (map identity)
    (completing conj)
    []
    "X in 1..10, indomain(X).")
 
-  (transduce-query! (map :bindings)
+  (transduce-query! (map identity)
                     (fn ([res] (persistent! res))
                       ([res next]
                        (conj! res next)))
