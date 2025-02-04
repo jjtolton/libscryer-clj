@@ -4,6 +4,11 @@
 
 Because a modern lisp deserves a modern prolog.
 
+
+## HELP WANTED
+
+Right now, you must use raw strings with Prolog, which is not incredibly ergonomic. I'd like to have a way to translate Clojure forms to Prolog "terms". If you are interested in contributing to this design, please chime in on the [discussion](https://github.com/jjtolton/libscryer-clj/discussions/1)!
+
 <hr>
 
 ### Working Commits
