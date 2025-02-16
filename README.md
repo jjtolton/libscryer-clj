@@ -12,11 +12,15 @@ Right now, you must use raw strings with Prolog, which is not incredibly ergonom
 <hr>
 
 ### Working Commits
-Known to work with Scryer Prolog `jjtolton` fork [8b307a1c515b9f3489e9a581aff8fb77e8f63e76](https://github.com/jjtolton/scryer-prolog/commit/8b307a1c515b9f3489e9a581aff8fb77e8f63e76).
+
+
+Clojure version is known to work with Scryer Prolog `jjtolton` fork [8b307a1c515b9f3489e9a581aff8fb77e8f63e76](https://github.com/jjtolton/scryer-prolog/commit/8b307a1c515b9f3489e9a581aff8fb77e8f63e76).
+
+ClojureScript version is known to work with Scryer Prolog `bakaq` fork [4a7e05a57bd9f9bce6a4bb563c782fb833191645](https://github.com/jjtolton/scryer-prolog/commit/8b307a1c515b9f3489e9a581aff8fb77e8f63e76).
 
 <hr>
 
-# Libscryer-clj
+# libscryer-clj(s)
 
 [Scryer Prolog](https://www.scryer.pl/) is an [ISO/IEC 13211-1](https://www.iso.org/standard/21413.html) compliant modern prolog system written in rust.
 
@@ -184,6 +188,36 @@ This is because the resources have been deallocated, and an exception is thrown 
 </details>
 
 
+### Building the JavaScript bindings
+
+1. Check out [4a7e05a57bd9f9bce6a4bb563c782fb833191645](https://github.com/jjtolton/scryer-prolog/commit/8b307a1c515b9f3489e9a581aff8fb77e8f63e76).
+2. Ensure wasm-bindgen is `cargo install`ed.
+3. 
+
+```bash
+
+# from scryer-prolog project root
+
+$ TARGET_CC=clang cargo build --target=wasm32-unknown-unknown --profile=wasm-dev
+$ wasm-bindgen target/wasm32-unknown-unknown/wasm-dev/scryer_prolog.wasm --out-dir=target/bindgen --target web
+```
+4. Copy the files the appropriate `resources/public` directory and `resources/test` directories.
+5. Ensure the following is in your HTML:
+
+```html
+    <script type="module">
+      import init, { MachineBuilder } from './scryer_prolog.js';
+      
+      const run = async () => {
+          await init("./scryer_prolog_bg.wasm");
+          window.MachineBuilder = MachineBuilder;
+      }
+      run();
+    </script>
+```
+
+6. Find a way to make this a better experience. `:/`
+
 ## Caveats, Nuances, Limitations, Foot Guns, and Garbage Collection
 
 The bindings are still [under development](https://github.com/mthom/scryer-prolog/pull/2465).
@@ -193,6 +227,8 @@ Please check the section in the [documentation](https://github.com/jjtolton/scry
 ## TODO:
 
 - [ ] Clojure/Prolog isomorphic API/macros (TBD)
+- [X] ClojureScript support (POC)
+- [ ] Additional documentation on Scryer ClojureScript
 
 <hr>
 
@@ -201,6 +237,8 @@ Please check the section in the [documentation](https://github.com/jjtolton/scry
 Technique for embedding shared libraries in Clojure developed by the astonishing [Chris Neurnberger](https://github.com/cnuernber). 
 
 Huge thanks to the [Scryer Prolog community](https://github.com/mthom/scryer-prolog) for encouragement, knowledge, and help developing the rust Scryer bindings.
+
+Enormous thanks to [Kauê Hunnicutt Bazilli](https://github.com/bakaq) for the amazing work on the WASM and JavaScript bindings for Scryer!
 
 Special thanks to [Markus Triska](https://www.metalevel.at/) for making the mysteries of Prolog fun, understandable, and meaningful!
 

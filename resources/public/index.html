@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head profile="https://www.w3.org/2005/10/profile">
+    <title>libscryer-clj</title>
+  </head>
+        <body>
+          <div id="app"></div>
+          <script src="js/compiled/base.js"></script>
+          <script src="js/compiled/app.js"></script>
+          <!-- <script src="js/scryer-prolog.js"></script> -->
+          <script type="module">
+            import init, { MachineBuilder } from './js/scryer_prolog.js';
+            
+            const run = async () => {
+                await init("./js/scryer_prolog_bg.wasm");
+                window.MachineBuilder = MachineBuilder;
+            }
+            run();
+          </script>
+  </body>
+</html>
+

@@ -1,0 +1,7 @@
+{:libscryer-prolog-path "/home/jay/programs/scryer-prolog/target/release/libscryer_prolog.so"
+ :notes "https://github.com/jjtolton/scryer-prolog/commit/8b307a1c515b9f3489e9a581aff8fb77e8f63e76"
+ :prelude
+ ":- use_module(library(clpz)).
+  :- use_module(library(dif)).
+  :- use_module(library(lists))."
+ :auto-intialize        true}
